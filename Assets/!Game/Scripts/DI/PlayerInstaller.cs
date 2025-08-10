@@ -35,7 +35,7 @@ public class PlayerInstaller : MonoInstaller
             .AsSingle();
         
         this.Container
-            .Bind<CircleArea2D>()
+            .Bind<BoxArea2D>()
             .FromComponentInHierarchy()
             .AsSingle();
         

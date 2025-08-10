@@ -25,11 +25,17 @@ public class InputMovement : MonoBehaviour
      Range(0f, 100f)]
     private float _jumpSpeed = 3f;
     
-    [Header("Fall speed."), 
-     Tooltip("The speed modifier of the fall along the Y axis in world coordinates."), 
+    [Header("Regular fall speed."), 
+     Tooltip("The speed modifier of the regular fall along the Y axis in world coordinates."), 
      SerializeField, 
      Range(0f, 100f)]
-    private float _fallSpeed = 3f;
+    private float _regularFallSpeed = 3f;
+    
+    [Header("Force fall speed."), 
+     Tooltip("The speed modifier of the force fall along the Y axis in world coordinates.."), 
+     SerializeField, 
+     Range(0f, 100f)]
+    private float _forceFallSpeed = 3f;
     
     private CancellationTokenSource _cancellationTokenSource;
     private bool _inProcess = false;
@@ -43,6 +49,7 @@ public class InputMovement : MonoBehaviour
     private PlayerCollisionIdentifier _collisionIdentifier;
     private Vector3 _startPosition;
     private bool _settingStartPosition = true;
+    private bool _isForceFalling = false;
     #endregion
 
     #region Properties
@@ -104,6 +111,7 @@ public class InputMovement : MonoBehaviour
             _cancellationTokenSource = new CancellationTokenSource();
         
         _inProcess = true;
+        _isForceFalling = false;
         _onChangeMovementStateEvent?.Invoke(MovementState.Jumping);
         
         if(_settingStartPosition)
@@ -126,16 +134,14 @@ public class InputMovement : MonoBehaviour
             }
             catch (OperationCanceledException exception)
             {
-                _cancellationTokenSource.Dispose();
-                _cancellationTokenSource = null;
-                break;
+                return;
             }
         }
         
         _inProcess = false;
     }
 
-    private async void Falling()
+    private async void Falling(float fallSpeed)
     {
         if(!hasTransform)
             return;
@@ -150,7 +156,7 @@ public class InputMovement : MonoBehaviour
         
         Vector3 newPosition = _movableTransform.transform.position;
         float currentYAxisValue = newPosition.y;
-        float jumpPositionChange = _fallSpeed * Time.timeScale * Time.fixedDeltaTime;
+        float jumpPositionChange = fallSpeed * Time.timeScale * Time.fixedDeltaTime;
 
         while ((!_isGrounded) && (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested) && !Blocked)
         {
@@ -164,19 +170,30 @@ public class InputMovement : MonoBehaviour
             }
             catch (OperationCanceledException exception)
             {
-                _cancellationTokenSource.Dispose();
-                _cancellationTokenSource = null;
-                break;
+                return;
             }
         }
-        
-        _onChangeMovementStateEvent?.Invoke(MovementState.Falling);
         
         if(_settingStartPosition)
             _movableTransform.position = _startPosition;
         
         _settingStartPosition = true;
+        _onChangeMovementStateEvent?.Invoke(MovementState.Falling);
         _inProcess = false;
+    }
+    
+    private async void ForceFalling(InputAction.CallbackContext context)
+    {
+        if(_isForceFalling)
+            return;
+        
+        _isForceFalling = true;
+        
+        if(_inProcess)
+            StopExecution();
+        
+        Debug.Log("ForceFalling!");
+        Falling(_forceFallSpeed);
     }
 
     private void GroundDetection(CollisionTagContainer[] tags)
@@ -187,7 +204,7 @@ public class InputMovement : MonoBehaviour
             _isGrounded = tags.Any(tag => tag.Tag == CollisionTags.Ground);
         
         if(!_isGrounded)
-            Falling();
+            Falling(_regularFallSpeed);
     }
 
     private void OnEnable()
@@ -198,6 +215,7 @@ public class InputMovement : MonoBehaviour
         }
         
         InputProvider.JumpInputAction.started += Jumping;
+        InputProvider.ForceFallInputAction.started += ForceFalling;
     }
 
     private void OnDisable()
@@ -208,6 +226,7 @@ public class InputMovement : MonoBehaviour
         }
         
         InputProvider.JumpInputAction.started -= Jumping;
+        InputProvider.ForceFallInputAction.started -= ForceFalling;
         StopExecution();
     }
 
@@ -218,6 +237,9 @@ public class InputMovement : MonoBehaviour
         if (_inProcess && _cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
         {
             _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = null;
+            _inProcess = false;
         }
     }
     #endregion

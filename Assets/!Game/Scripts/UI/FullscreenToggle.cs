@@ -9,24 +9,26 @@ public class FullscreenToggle : MonoBehaviour
     [SerializeField] private Sprite fullscreenIcon;  
     [SerializeField] private Sprite windowedIcon;    
 
+    private bool _currentFullscreenState = false;
+    
     private void Start()
     {
         UpdateButtonIcon();
-        Screen.fullScreen = false;
     }
 
     public void ToggleFullscreen()
     {
-        Screen.fullScreen = !Screen.fullScreen;
-        UpdateButtonIcon();
+        _currentFullscreenState = !_currentFullscreenState;
+        UpdateButtonIcon(_currentFullscreenState);
+        Screen.fullScreen = _currentFullscreenState;
     }
 
-    private void UpdateButtonIcon()
+    private void UpdateButtonIcon(bool fullScreenState = false)
     {
         if (fullscreenButton == null) 
             return;
 
-        if (Screen.fullScreen)
+        if (fullScreenState)
         {
             fullscreenButton.image.sprite = windowedIcon;
         }

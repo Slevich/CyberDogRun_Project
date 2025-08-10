@@ -8,7 +8,7 @@ public class PlayerDependenciesManager : MonoBehaviour
     private Rigidbody _rigidbody;
     private InputMovement _movement;
     private PlayerCollisionIdentifier _collisionIdentifier;
-    private CircleArea2D _circleArea2D;
+    private BoxArea2D _boxArea2D;
     #endregion
 
 

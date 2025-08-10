@@ -9,6 +9,7 @@ public static class InputProvider
 
     #region Properties
     public static InputAction JumpInputAction { get; private set; }
+    public static InputAction ForceFallInputAction { get; private set; }
     public static InputAction EscapeInputAction { get; private set; }
     public static InputSystem_Actions.PlayerActions PlayerInputAction => _inputActions.Player;
     
@@ -49,6 +50,7 @@ public static class InputProvider
     {
         _inputActions = new InputSystem_Actions();
         JumpInputAction = _inputActions.Player.Jump;
+        ForceFallInputAction = _inputActions.Player.ForceFall;
         EscapeInputAction = _inputActions.UI.Escape;
         _inputActions.Enable();
         PlayerInputEnabled = false;

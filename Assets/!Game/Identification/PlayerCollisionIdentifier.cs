@@ -11,7 +11,7 @@ using Zenject;
 public class PlayerCollisionIdentifier : MonoBehaviour
 {
     #region Fields
-    private CircleArea2D _circle;
+    private BoxArea2D _box;
     
     private bool _inProgress = false;
     private CancellationTokenSource _cancellationTokenSource;
@@ -20,19 +20,19 @@ public class PlayerCollisionIdentifier : MonoBehaviour
     #region Properties
     public ISubject<CollisionTagContainer[]> SphereCollisionsDetected { get; private set; } = new Subject<CollisionTagContainer[]>();
     public ISubject<CollisionTagContainer[]> RaysCollisionsDetected { get; private set; } = new Subject<CollisionTagContainer[]>();
-    public Vector3 CasterPosition => _circle != null ? _circle.Center : transform.position;
+    public Vector3 CasterPosition => _box != null ? _box.Center : transform.position;
     #endregion
 
     #region Methods
     [Inject]
-    public void Construct(CircleArea2D Circle)
+    public void Construct(BoxArea2D box)
     {
-        _circle = Circle;
+        _box = box;
     }
     
     private async void StartCasting()
     {
-        if (_circle == null)
+        if (_box == null)
         {
             Debug.LogError("No CircleArea2D to cast sphere!");
             return;
@@ -48,7 +48,7 @@ public class PlayerCollisionIdentifier : MonoBehaviour
 
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            RaycastHit2D[] sphereHits = Physics2D.CircleCastAll(_circle.Center, _circle.Radius, Vector2.zero);
+            RaycastHit2D[] sphereHits = Physics2D.BoxCastAll(_box.Center, _box.Size, 0f, Vector2.zero);
             List<CollisionTagContainer> sphereCollisions = new List<CollisionTagContainer>();
             
             if (sphereHits.Length > 0)
@@ -67,7 +67,7 @@ public class PlayerCollisionIdentifier : MonoBehaviour
             SphereCollisionsDetected.OnNext(sphereCollisions.ToArray());
 
             float distance = 100f;
-            Vector2 rayStartPosition = new Vector2(_circle.Center.x, _circle.Center.y - (distance / 2));
+            Vector2 rayStartPosition = new Vector2(_box.Center.x, _box.Center.y - (distance / 2));
             RaycastHit2D[] rayHits = Physics2D.RaycastAll(rayStartPosition, Vector2.up, distance);
             Debug.DrawRay(rayStartPosition, Vector2.up * distance, Color.red);
             List<CollisionTagContainer> rayCollisions = new List<CollisionTagContainer>();
@@ -109,7 +109,7 @@ public class PlayerCollisionIdentifier : MonoBehaviour
 
     private void StopCasting()
     {
-        if (_circle == null)
+        if (_box == null)
         {
             Debug.LogError("No CircleArea2D to cast sphere!");
             return;
